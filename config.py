@@ -2,12 +2,12 @@ import os
 from os import getenv
 
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
-API_ID = getenv("API_ID", "")
-API_HASH = getenv("API_HASH", "")
-sudo_group = -1002184158958
-sudo_user = 6323126404, 5959755604
-log_channel = -1002108264402
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "6944835957:AAEFIiHb3cNOp0CI0BNTAT-AwK9vXf4lLFQ")
+API_ID = getenv("API_ID", "27862677")
+API_HASH = getenv("API_HASH", "e343ce2c81b2b6c2c0d6bee58284e3bd")
+sudo_group = -1002111115192
+sudo_user = 5881684718, 5959755604
+log_channel = -1002111115192
 
 
 #import os
