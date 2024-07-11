@@ -14,23 +14,36 @@ from pyrogram.types import Message
 from pyrogram import Client, filters
 from config import log_channel
 
-def testspeed(m):
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+
+def run_speedtest(m):
+    """
+    Run a speed test and return the results.
+    """
     try:
         test = speedtest.Speedtest()
         test.get_best_server()
-        m = m.edit_text("<b>⇆ ʀᴜɴɴɪɴɢ ᴅᴏᴡɴʟᴏᴀᴅ sᴩᴇᴇᴅᴛᴇsᴛ...</b>")
+        m = m.edit_text("<b>⇆ Running download speed test...</b>")
         test.download()
-        m = m.edit_text("<b>⇆ ʀᴜɴɴɪɴɢ ᴜᴩʟᴏᴀᴅ sᴩᴇᴇᴅᴛᴇsᴛ...</b>")
+        m = m.edit_text("<b>⇆ Running upload speed test...</b>")
         test.upload()
         test.results.share()
         result = test.results.dict()
-        m = m.edit_text("<b>↻ sʜᴀʀɪɴɢ sᴩᴇᴇᴅᴛᴇsᴛ ʀᴇsᴜʟᴛs...</b>")
+        m = m.edit_text("<b>↻ Sharing speed test results...</b>")
     except Exception as e:
-        return m.edit_text(e)
+        return m.edit_text(str(e))
     return result
 
 
-def duration(filename):
+def get_video_duration(filename):
+    """
+    Get the duration of a video file.
+    """
     result = subprocess.run([
         "ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
         "default=noprint_wrappers=1:nokey=1", filename
@@ -40,42 +53,55 @@ def duration(filename):
     return float(result.stdout)
 
 
-async def download(url, name):
-    ka = f'{name}.pdf'
+async def download_file(url, name):
+    """
+    Download a file from a URL and save it with the specified name.
+    """
+    file_path = f'{name}.pdf'
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             if resp.status == 200:
-                f = await aiofiles.open(ka, mode='wb')
-                await f.write(await resp.read())
-                await f.close()
-    return ka
+                async with aiofiles.open(file_path, mode='wb') as f:
+                    await f.write(await resp.read())
+    return file_path
 
-async def adda(url, name, cookies, stream=True):
-    ka = f'{name}.pdf'
+
+async def download_file_with_cookies(url, name, cookies):
+    """
+    Download a file from a URL with cookies and save it with the specified name.
+    """
+    file_path = f'{name}.pdf'
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, cookies = cookies) as resp:
+        async with session.get(url, cookies=cookies) as resp:
             if resp.status == 200:
-                f = await aiofiles.open(ka, mode='wb')
-                await f.write(await resp.read())
-                await f.close()
-    return ka
+                async with aiofiles.open(file_path, mode='wb') as f:
+                    await f.write(await resp.read())
+    return file_path
 
-async def run(cmd):
+
+async def run_command(cmd):
+    """
+    Run a shell command asynchronously and return the output.
+    """
     proc = await asyncio.create_subprocess_shell(
-        cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
 
     stdout, stderr = await proc.communicate()
 
-    print(f'[{cmd!r} exited with {proc.returncode}]')
-    if proc.returncode == 1:
+    logging.info(f'[{cmd!r} exited with {proc.returncode}]')
+    if proc.returncode != 0:
         return False
     if stdout:
-        return f'[stdout]\n{stdout.decode()}'
+        return stdout.decode()
     if stderr:
-        return f'[stderr]\n{stderr.decode()}'
+        return stderr.decode()
 
 
-def old_download(url, file_name, chunk_size=1024 * 10):
+def download_file_old(url, file_name, chunk_size=1024 * 10):
+    """
+    Download a file from a URL using requests and save it with the specified name.
+    """
     if os.path.exists(file_name):
         os.remove(file_name)
     r = requests.get(url, allow_redirects=True, stream=True)
@@ -86,7 +112,10 @@ def old_download(url, file_name, chunk_size=1024 * 10):
     return file_name
 
 
-def human_readable_size(size, decimal_places=2):
+def format_size(size, decimal_places=2):
+    """
+    Format a file size in human-readable form.
+    """
     for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
         if size < 1024.0 or unit == 'PB':
             break
@@ -94,23 +123,28 @@ def human_readable_size(size, decimal_places=2):
     return f"{size:.{decimal_places}f} {unit}"
 
 
-def time_name():
+def generate_filename():
+    """
+    Generate a unique filename based on the current date and time.
+    """
     date = datetime.date.today()
     now = datetime.datetime.now()
     current_time = now.strftime("%H%M%S")
     return f"{date} {current_time}.mp4"
 
 
-async def download_video(url, cmd, name):
+async def download_video_file(url, cmd, name):
+    """
+    Download a video file using a specified command and return the file name.
+    """
     download_cmd = f'{cmd} -R 25 --fragment-retries 25 --external-downloader aria2c --downloader-args "aria2c: -x 16 -j 32 --split=16 --max-connection-per-server=4"'
     global failed_counter
-    print(download_cmd)
     logging.info(download_cmd)
-    k = subprocess.run(download_cmd, shell=True)
-    if "visionias" in cmd and k.returncode != 0 and failed_counter <= 10:
+    result = subprocess.run(download_cmd, shell=True)
+    if "visionias" in cmd and result.returncode != 0 and failed_counter <= 10:
         failed_counter += 1
-        await asyncio.sleep(-5)
-        await download_video(url, cmd, name)
+        await asyncio.sleep(5)
+        await download_video_file(url, cmd, name)
     failed_counter = 0
     try:
         if os.path.isfile(name):
@@ -124,45 +158,36 @@ async def download_video(url, cmd, name):
             return f"{name}.mp4"
         elif os.path.isfile(f"{name}.mp4.webm"):
             return f"{name}.mp4.webm"
-
         return name
-    except FileNotFoundError as exc:
-        return os.path.isfile.splitext[0] + "." + "mp4"
+    except FileNotFoundError:
+        return os.path.splitext(name)[0] + ".mp4"
 
 
-
-async def send_vid(bot: Client, m: Message, cc, filename, thumb, name, chat: int):
-
+async def send_video(bot: Client, m: Message, caption, filename, thumb, name, chat: int):
+    """
+    Send a video file to a Telegram chat.
+    """
     subprocess.run(
         f'ffmpeg -i "{filename}" -ss 00:01:00 -vframes 1 "{filename}.jpg"',
-        shell=True)
-    #await prog.delete(True)
-    # reply = await m.reply_text(f"**Uploading ...** - `{name}`")
+        shell=True
+    )
+
     try:
-        if thumb == "no":
-            thumbnail = f"{filename}.jpg"
-        else:
-            thumbnail = thumb
+        thumbnail = thumb if thumb != "no" else f"{filename}.jpg"
     except Exception as e:
         await m.reply_text(str(e))
 
-    dur = int(duration(filename))
+    dur = int(get_video_duration(filename))
 
     start_time = time.time()
 
     try:
-        copy = await bot.send_video(chat_id=chat,video=filename,caption=cc, supports_streaming=True,height=720,width=1280,thumb=thumbnail,duration=dur) #, progress=progress_bar,progress_args=(reply,start_time))
-        #await copy.copy(chat_id = log_channel) 
+        await bot.send_video(chat_id=chat, video=filename, caption=caption, supports_streaming=True, height=720, width=1280, thumb=thumbnail, duration=dur)
     except TimeoutError:
-        await asyncio.sleep(-5) 
-        copy = await bot.send_video(chat_id=chat,video=filename,caption=cc, supports_streaming=True,height=720,width=1280,thumb=thumbnail,duration=dur) #, progress=progress_bar,progress_args=(reply,start_time))
-        #await copy.copy(chat_id = log_channel)       
+        await asyncio.sleep(5)
+        await bot.send_video(chat_id=chat, video=filename, caption=caption, supports_streaming=True, height=720, width=1280, thumb=thumbnail, duration=dur)
     except Exception:
-        copy = await bot.send_video(chat_id=chat,video=filename,caption=cc, supports_streaming=True,height=720,width=1280,thumb=thumbnail,duration=dur) #,progress=progress_bar,progress_args=(reply,start_time))
-        #await copy.copy(chat_id = log_channel)
-
+        await bot.send_video(chat_id=chat, video=filename, caption=caption, supports_streaming=True, height=720, width=1280, thumb=thumbnail, duration=dur)
 
     os.remove(filename)
-
     os.remove(f"{filename}.jpg")
-    # await reply.delete(True)
