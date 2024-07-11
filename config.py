@@ -7,7 +7,7 @@ API_ID = getenv("API_ID", "27862677")
 API_HASH = getenv("API_HASH", "e343ce2c81b2b6c2c0d6bee58284e3bd")
 sudo_group = -1002111115192
 sudo_user = 5881684718, 5959755604
-log_channel = -1002111115192
+log_channel = -1002111115156
 
 
 #import os
