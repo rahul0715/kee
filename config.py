@@ -1,15 +1,13 @@
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-API_ID = int(os.getenv("27862677"))
-API_HASH = os.getenv("e343ce2c81b2b6c2c0d6bee58284e3bd")
-BOT_TOKEN = os.getenv("6944835957:AAEFIiHb3cNOp0CI0BNTAT-AwK9vXf4lLFQ")
-sudo_group = int(os.getenv("-4232283991"))
-log_channel = int(os.getenv("5881684718"))
+from os import getenv
 
 
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "7132722759:AAEEQyIy9cuqPSG9vs1vU4O-LNLZU4xm83w")
+API_ID = getenv("API_ID", "22609670")
+API_HASH = getenv("API_HASH", "3506d8474ad1f4f5e79b7c52a5c3e88d")
+sudo_group = -1002229027074
+sudo_user = 5881684718, 5959755604
+log_channel = -1002108264402
 
 
 #import os
