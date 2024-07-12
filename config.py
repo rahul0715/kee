@@ -2,7 +2,7 @@ import os
 from os import getenv
 
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "7132722759:AAEEQyIy9cuqPSG9vs1vU4O-LNLZU4xm83w")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "6222312447:AAFNySJoJls4qbn50gr2wsXdaGt3xozvxmo")
 API_ID = getenv("API_ID", "22609670")
 API_HASH = getenv("API_HASH", "3506d8474ad1f4f5e79b7c52a5c3e88d")
 sudo_group = -1002229027074
